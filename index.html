@@ -1,0 +1,916 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>PEO Achievement Analytics Dashboard — JKE, PSP</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --navy:#0d2240;--navy2:#1a3a5c;--blue:#1d6fa4;--blue2:#2563a8;
+  --green:#16a34a;--glt:#dcfce7;--gtxt:#15803d;
+  --amber:#d97706;--alt:#fef9c3;--atxt:#92400e;
+  --red:#dc2626;--rlt:#fee2e2;--rtxt:#b91c1c;
+  --bg:#eef1f5;--surf:#fff;--bdr:#e5e7eb;
+  --txt:#1a2535;--muted:#57606a;
+}
+body{font-family:"Segoe UI",system-ui,sans-serif;background:var(--bg);color:var(--txt);min-height:100vh;font-size:14px;}
+
+/* ── HEADER ── */
+.hdr{background:linear-gradient(135deg,var(--navy) 0%,#1d5fa4 100%);color:#fff;}
+.hdr-i{max-width:1380px;margin:0 auto;padding:14px 24px;display:flex;align-items:center;gap:14px;}
+.hdr-logo{width:54px;height:54px;background:#fff;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;}
+.hdr-logo img{width:100%;height:100%;object-fit:contain;}
+.hdr-logo-txt{font-size:17px;font-weight:900;color:var(--navy2);letter-spacing:-1px;}
+.hdr-txt h1{font-size:1.05rem;font-weight:700;line-height:1.3;}
+.hdr-txt p{font-size:.72rem;opacity:.8;margin-top:2px;}
+.hdr-r{margin-left:auto;display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+.hdr-pill{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);border-radius:8px;padding:5px 13px;font-size:.72rem;text-align:center;}
+.hdr-pill strong{display:block;font-size:.88rem;}
+.btn-print{display:flex;align-items:center;gap:5px;padding:7px 14px;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.3);border-radius:8px;color:#fff;font-size:.78rem;font-weight:600;cursor:pointer;transition:.15s;}
+.btn-print:hover{background:rgba(255,255,255,.28);}
+
+/* ── NAV ── */
+.nav{background:var(--navy2);border-top:1px solid rgba(255,255,255,.08);}
+.nav-i{max-width:1380px;margin:0 auto;display:flex;padding:0 24px;gap:2px;}
+.nb{padding:11px 18px;cursor:pointer;font-size:.82rem;font-weight:600;color:rgba(255,255,255,.58);border-bottom:3px solid transparent;transition:.18s;white-space:nowrap;display:flex;align-items:center;gap:5px;}
+.nb:hover{color:#fff;}
+.nb.on{color:#fff;border-bottom-color:#5ab4ff;}
+
+/* ── MAIN ── */
+.main{max-width:1380px;margin:0 auto;padding:22px 24px;}
+.pg{display:none;}.pg.on{display:block;}
+.pg-ttl{margin-bottom:18px;}
+.pg-ttl h2{font-size:1.1rem;font-weight:700;color:var(--navy2);}
+.pg-ttl p{font-size:.78rem;color:var(--muted);margin-top:2px;}
+
+/* ── FILTER ── */
+.fb{display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:var(--surf);border-radius:10px;padding:11px 18px;box-shadow:0 1px 3px rgba(0,0,0,.07);margin-bottom:18px;}
+.fb label{font-size:.76rem;color:var(--muted);font-weight:700;white-space:nowrap;}
+.fb select{padding:6px 10px;border:1px solid var(--bdr);border-radius:6px;font-size:.82rem;background:#f7f8fa;color:var(--txt);cursor:pointer;outline:none;}
+.fb select:focus{border-color:var(--blue2);}
+.tile-f{display:flex;gap:5px;}
+.tbtn{padding:5px 13px;border:1.5px solid var(--bdr);border-radius:20px;font-size:.76rem;cursor:pointer;background:#fff;color:var(--muted);font-weight:600;transition:.15s;}
+.tbtn.on,.tbtn:hover{background:var(--blue2);color:#fff;border-color:var(--blue2);}
+
+/* ── KPI GRID ── */
+.kg{display:grid;grid-template-columns:repeat(6,1fr);gap:13px;margin-bottom:18px;}
+@media(max-width:1100px){.kg{grid-template-columns:repeat(3,1fr);}}
+@media(max-width:600px){.kg{grid-template-columns:repeat(2,1fr);}}
+.kc{background:var(--surf);border-radius:11px;padding:15px 17px;box-shadow:0 1px 3px rgba(0,0,0,.07);border-top:4px solid var(--blue2);}
+.kc.g{border-top-color:var(--green);}
+.kc.a{border-top-color:var(--amber);}
+.kc.r{border-top-color:var(--red);}
+.kc .kl{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);margin-bottom:5px;}
+.kc .kv{font-size:1.8rem;font-weight:800;line-height:1;color:var(--txt);}
+.kc .kv span{font-size:.88rem;font-weight:600;color:var(--muted);}
+.kc .ks{font-size:.7rem;color:var(--muted);margin-top:4px;}
+.badge{display:inline-block;padding:2px 9px;border-radius:20px;font-size:.67rem;font-weight:700;margin-top:5px;}
+.bg{background:var(--glt);color:var(--gtxt);}
+.ba{background:var(--alt);color:var(--atxt);}
+.br{background:var(--rlt);color:var(--rtxt);}
+.bb{background:#dbeafe;color:#1e40af;}
+
+/* ── CARD ── */
+.card{background:var(--surf);border-radius:12px;padding:20px 22px;box-shadow:0 1px 3px rgba(0,0,0,.07);margin-bottom:18px;}
+.card h3{font-size:.9rem;font-weight:700;color:var(--navy2);margin-bottom:3px;}
+.card .cs{font-size:.74rem;color:var(--muted);margin-bottom:14px;}
+.cw{position:relative;width:100%;}
+
+/* ── GRID ── */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px;}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:18px;margin-bottom:18px;}
+.g13{display:grid;grid-template-columns:1fr 2.1fr;gap:18px;margin-bottom:18px;}
+.g21{display:grid;grid-template-columns:2fr 1fr;gap:18px;margin-bottom:18px;}
+@media(max-width:880px){.g2,.g3,.g13,.g21{grid-template-columns:1fr;}}
+
+/* ── TABLE ── */
+.dt{width:100%;border-collapse:collapse;font-size:.81rem;}
+.dt th{background:#f0f4fa;color:var(--navy2);padding:9px 12px;text-align:left;font-weight:700;border-bottom:2px solid #d1d8e8;}
+.dt th.c,.dt td.c{text-align:center;}
+.dt td{padding:8px 12px;border-bottom:1px solid #f0f0f0;vertical-align:middle;}
+.dt tr:last-child td{border-bottom:none;}
+.dt tr:hover td{background:#f7f9fc;}
+
+/* ── HEATMAP ── */
+.hm{width:100%;border-collapse:collapse;font-size:.84rem;}
+.hm th{background:#f0f4fa;color:var(--navy2);padding:10px 14px;text-align:center;font-weight:700;border:1px solid #d1d8e8;}
+.hm th:first-child{text-align:left;}
+.hm td{padding:11px 14px;text-align:center;border:1px solid #e9ecef;font-weight:700;font-size:1rem;}
+.hm td:first-child{text-align:left;background:#f7f9fc;font-weight:700;color:var(--navy2);font-size:.84rem;}
+.cg{background:var(--glt);color:var(--gtxt);}
+.ca{background:var(--alt);color:var(--atxt);}
+.cr{background:var(--rlt);color:var(--rtxt);}
+
+/* ── STATUS ── */
+.dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;vertical-align:middle;}
+.dg{background:var(--green);}
+.da{background:var(--amber);}
+.dr{background:var(--red);}
+.sg{color:var(--gtxt);font-weight:700;}
+.sa{color:var(--atxt);font-weight:700;}
+.sr{color:var(--rtxt);font-weight:700;}
+
+/* ── PROGRESS BAR ── */
+.pb{background:#e9ecef;border-radius:20px;height:8px;overflow:hidden;margin-top:4px;}
+.pbf{height:100%;border-radius:20px;}
+.pbg{background:var(--green);}
+.pba{background:var(--amber);}
+.pbr{background:var(--red);}
+
+/* ── RANKING ── */
+.rrow{display:flex;align-items:center;gap:11px;padding:9px 0;border-bottom:1px solid #f0f0f0;}
+.rrow:last-child{border:none;}
+.rnum{width:27px;height:27px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.78rem;flex-shrink:0;}
+.rn1{background:#ffd700;color:#78350f;}
+.rn2{background:#c0c0c0;color:#374151;}
+.rn3{background:#cd7f32;color:#fff;}
+.ri{flex:1;}
+.ri .rn{font-weight:700;font-size:.84rem;}
+.ri .rs{font-size:.7rem;color:var(--muted);}
+.rv{font-weight:800;font-size:.98rem;color:var(--navy2);}
+
+/* ── LEGEND ── */
+.leg{display:flex;gap:16px;flex-wrap:wrap;font-size:.74rem;margin-bottom:12px;}
+.li{display:flex;align-items:center;gap:5px;}
+.lb{width:12px;height:12px;border-radius:3px;}
+
+/* ── PEO GAUGES ── */
+.pgs{display:grid;grid-template-columns:repeat(4,1fr);gap:13px;margin-bottom:18px;}
+@media(max-width:880px){.pgs{grid-template-columns:repeat(2,1fr);}}
+.pgc{background:var(--surf);border-radius:11px;padding:15px;box-shadow:0 1px 3px rgba(0,0,0,.07);text-align:center;}
+.pgc .pgl{font-size:.7rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;}
+.pgc .pgs2{font-size:2rem;font-weight:800;line-height:1;margin:5px 0;}
+.pgc .pgt{font-size:.72rem;color:var(--muted);}
+
+/* ── CQI BOXES ── */
+.cf{border-left:4px solid var(--blue2);background:#eff6ff;border-radius:0 8px 8px 0;padding:11px 15px;margin-bottom:9px;}
+.cf .ft{font-size:.66rem;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:#1d4ed8;margin-bottom:3px;}
+.cf strong{color:var(--navy2);display:block;margin-bottom:2px;font-size:.86rem;}
+.cf p{font-size:.81rem;color:#374151;line-height:1.6;}
+.crec{border-left:4px solid var(--green);background:#f0fdf4;border-radius:0 8px 8px 0;padding:11px 15px;margin-bottom:9px;}
+.crec .ft{color:var(--gtxt);}
+.crec strong{color:#14532d;display:block;margin-bottom:2px;font-size:.86rem;}
+.crec p{font-size:.81rem;color:#374151;line-height:1.6;}
+.crisk{border-left:4px solid var(--red);background:#fef2f2;border-radius:0 8px 8px 0;padding:11px 15px;margin-bottom:9px;}
+.crisk .ft{color:var(--rtxt);}
+.crisk strong{color:#7f1d1d;display:block;margin-bottom:2px;font-size:.86rem;}
+.crisk p{font-size:.81rem;color:#374151;line-height:1.6;}
+.cwarn{border-left:4px solid var(--amber);background:#fff7ed;border-radius:0 8px 8px 0;padding:11px 15px;margin-bottom:9px;}
+.cwarn .ft{color:var(--atxt);}
+.cwarn strong{color:#78350f;display:block;margin-bottom:2px;font-size:.86rem;}
+.cwarn p{font-size:.81rem;color:#374151;line-height:1.6;}
+
+/* ── ACCRED BOX ── */
+.abox{background:linear-gradient(135deg,#eff6ff,#f0fdf4);border:1px solid #bfdbfe;border-radius:12px;padding:16px 20px;margin-bottom:18px;}
+.abox h3{font-size:.9rem;font-weight:700;color:var(--navy2);margin-bottom:12px;}
+.ag{display:grid;grid-template-columns:repeat(3,1fr);gap:11px;}
+@media(max-width:700px){.ag{grid-template-columns:1fr;}}
+.ac{background:#fff;border-radius:8px;padding:12px 14px;border:1px solid var(--bdr);}
+.ac .acc{font-size:.7rem;font-weight:700;color:var(--muted);text-transform:uppercase;}
+.ac .acn{font-size:.78rem;font-weight:700;color:var(--navy2);margin:3px 0;}
+.ac .acr{display:flex;justify-content:space-between;font-size:.76rem;border-bottom:1px solid #f0f0f0;padding:3px 0;}
+.ac .acr:last-child{border:none;}
+
+/* ── FOOTER ── */
+.footer{border-top:1px solid var(--bdr);margin-top:28px;padding:15px 24px;text-align:center;font-size:.7rem;color:var(--muted);max-width:1380px;margin-left:auto;margin-right:auto;}
+
+@media print{
+  .nav,.fb,.btn-print{display:none!important;}
+  .pg{display:block!important;}
+  body{background:#fff;}
+  .card,.kc,.pgc{box-shadow:none;border:1px solid #e5e7eb;}
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="hdr">
+  <div class="hdr-i">
+    <div class="hdr-logo">
+      <img src="logo.png" alt="PSP" onerror="this.style.display='none';this.parentElement.innerHTML='<span class=\'hdr-logo-txt\'>PSP</span>'"/>
+    </div>
+    <div class="hdr-txt">
+      <h1>PEO Achievement Analytics Dashboard</h1>
+      <p>Jabatan Kejuruteraan Elektrik (JKE) &nbsp;|&nbsp; Politeknik Seberang Perai &nbsp;|&nbsp; 2021 Graduate Cohort &nbsp;|&nbsp; OBE Monitoring System</p>
+    </div>
+    <div class="hdr-r">
+      <div class="hdr-pill"><strong>DEE · DTK · DEP</strong>3 Programmes</div>
+      <div class="hdr-pill"><strong>2021</strong>Graduate Cohort</div>
+      <div class="hdr-pill"><strong>ETAC / MQA</strong>Accreditation</div>
+      <button class="btn-print" onclick="window.print()">🖨️ Print / Export</button>
+    </div>
+  </div>
+</div>
+
+<!-- NAV -->
+<div class="nav">
+  <div class="nav-i">
+    <div class="nb on" data-pg="p1">📊 Executive Overview</div>
+    <div class="nb" data-pg="p2">🔀 Programme Comparison</div>
+    <div class="nb" data-pg="p3">🔍 PEO Deep Dive</div>
+    <div class="nb" data-pg="p4">⚙ CQI Intelligence</div>
+  </div>
+</div>
+
+<div class="main">
+
+<!-- ══════════════════ PAGE 1: EXECUTIVE OVERVIEW ══════════════════ -->
+<div class="pg on" id="p1">
+  <div class="pg-ttl">
+    <h2>📊 Executive Overview</h2>
+    <p>Ringkasan keseluruhan pencapaian PEO merentas 3 program — Cohort 2021 · Data Sumber: Graduate Survey 2026</p>
+  </div>
+
+  <div class="kg" id="kpi-p1"></div>
+
+  <div class="g21">
+    <div class="card">
+      <h3>Achievement vs Target — All Programmes & PEOs</h3>
+      <p class="cs">Setiap kumpulan bar = 1 PEO; setiap warna = 1 program. Garis merah putus-putus = sasaran KPI.</p>
+      <div class="cw" style="max-height:310px;"><canvas id="ch-tva"></canvas></div>
+    </div>
+    <div class="card">
+      <h3>🏆 Programme Performance Ranking</h3>
+      <p class="cs">Kedudukan berdasarkan purata pencapaian keseluruhan PEO.</p>
+      <div id="ranking"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>PEO Status Matrix — Heatmap</h3>
+    <p class="cs">Warna hijau = Achieved; Kuning = Within 10% below target; Merah = More than 10% below target.</p>
+    <div class="leg">
+      <div class="li"><div class="lb" style="background:var(--glt);border:1px solid var(--green);"></div>Achieved ≥ Target</div>
+      <div class="li"><div class="lb" style="background:var(--alt);border:1px solid var(--amber);"></div>Within 10% below</div>
+      <div class="li"><div class="lb" style="background:var(--rlt);border:1px solid var(--red);"></div>More than 10% below</div>
+    </div>
+    <table class="hm"><thead><tr><th>Programme</th><th>PEO 1</th><th>PEO 2</th><th>PEO 3</th><th>PEO 4</th><th>Avg</th></tr></thead>
+    <tbody id="hm-p1"></tbody></table>
+  </div>
+
+  <div class="card">
+    <h3>Detailed Achievement Summary Table</h3>
+    <p class="cs">Jadual lengkap pencapaian, sasaran, gap dan status bagi semua program dan PEO.</p>
+    <table class="dt">
+      <thead><tr><th>Programme</th><th>PEO</th><th class="c">Target (%)</th><th class="c">Achievement (%)</th><th class="c">Gap</th><th class="c">Status</th><th style="width:130px;">Progress</th></tr></thead>
+      <tbody id="sum-tbl"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ══════════════════ PAGE 2: PROGRAMME COMPARISON ══════════════════ -->
+<div class="pg" id="p2">
+  <div class="pg-ttl">
+    <h2>🔀 Programme Comparison Dashboard</h2>
+    <p>Perbandingan DEE vs DTK vs DEP — Response Rate, Gender Distribution, PEO Achievement.</p>
+  </div>
+
+  <div class="fb">
+    <label>Filter PEO:</label>
+    <div class="tile-f" id="peo-tf">
+      <div class="tbtn on" data-peo="all">All PEOs</div>
+      <div class="tbtn" data-peo="PEO1">PEO 1</div>
+      <div class="tbtn" data-peo="PEO2">PEO 2</div>
+      <div class="tbtn" data-peo="PEO3">PEO 3</div>
+      <div class="tbtn" data-peo="PEO4">PEO 4</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Clustered Column Chart — PEO Achievement by Programme</h3>
+    <p class="cs">Sasaran KPI: PEO1=60%, PEO2=80%, PEO3=60%, PEO4=80%. Garis titik = sasaran.</p>
+    <div class="cw" style="max-height:320px;"><canvas id="ch-cl"></canvas></div>
+  </div>
+
+  <div class="g2">
+    <div class="card">
+      <h3>Response Rate Comparison</h3>
+      <p class="cs">Kadar respons soal selidik graduan. Garis hijau = sasaran minimum 70%.</p>
+      <div class="cw" style="max-height:220px;"><canvas id="ch-rr"></canvas></div>
+    </div>
+    <div class="card">
+      <h3>Gender Distribution — Stacked Bar Chart</h3>
+      <p class="cs">Pecahan lelaki dan perempuan bagi setiap program.</p>
+      <div class="cw" style="max-height:220px;"><canvas id="ch-gen"></canvas></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Programme Comparison Heatmap — Achievement × Programme × PEO</h3>
+    <p class="cs">Pandangan matriks lengkap: pencapaian vs sasaran KPI dengan kod warna status.</p>
+    <table class="hm"><thead><tr><th>Programme</th><th>PEO 1<br><small style="font-weight:400;">Target: 60%</small></th><th>PEO 2<br><small style="font-weight:400;">Target: 80%</small></th><th>PEO 3<br><small style="font-weight:400;">Target: 60%</small></th><th>PEO 4<br><small style="font-weight:400;">Target: 80%</small></th><th>Avg</th><th>Resp. Rate</th></tr></thead>
+    <tbody id="hm-p2"></tbody></table>
+  </div>
+</div>
+
+<!-- ══════════════════ PAGE 3: PEO DEEP DIVE ══════════════════ -->
+<div class="pg" id="p3">
+  <div class="pg-ttl">
+    <h2>🔍 PEO Deep Dive Analysis</h2>
+    <p>Analisis terperinci soalan Q1–Q3 bagi setiap PEO merentas semua program. Data daripada Graduate Survey 2026.</p>
+  </div>
+
+  <div class="fb">
+    <label>Select PEO:</label>
+    <select id="p3-peo">
+      <option value="PEO1">PEO 1 — Practising Technician</option>
+      <option value="PEO2">PEO 2 — Ethics &amp; Responsibility</option>
+      <option value="PEO3">PEO 3 — Enterprising Activities</option>
+      <option value="PEO4">PEO 4 — Career Advancement</option>
+    </select>
+    <label style="margin-left:12px;">Programme:</label>
+    <select id="p3-prog">
+      <option value="all">All Programmes</option>
+      <option value="DEE">DEE</option>
+      <option value="DTK">DTK</option>
+      <option value="DEP">DEP</option>
+    </select>
+  </div>
+
+  <div class="pgs" id="peo-g4"></div>
+
+  <div class="g2">
+    <div class="card">
+      <h3>Question-Level Analysis (Sorted: Lowest First)</h3>
+      <p class="cs">Bar merah = di bawah purata PEO. Bar biru = mencapai atau melebihi purata PEO.</p>
+      <div class="cw" style="max-height:310px;"><canvas id="ch-ql"></canvas></div>
+    </div>
+    <div class="card">
+      <h3>Programme Comparison — Selected PEO</h3>
+      <p class="cs">Perbandingan skor Q1–Q3 merentas DEE, DTK dan DEP untuk PEO yang dipilih.</p>
+      <div class="cw" style="max-height:310px;"><canvas id="ch-pc"></canvas></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Matrix Table — All PEOs × All Programmes (Question Level)</h3>
+    <p class="cs">Jadual lengkap skor Q1–Q3 bagi setiap PEO-Program. Merah = di bawah purata PEO; ✘ = di bawah sasaran KPI.</p>
+    <table class="dt">
+      <thead><tr><th>Programme</th><th>PEO</th><th class="c">Q1 (%)</th><th class="c">Q2 (%)</th><th class="c">Q3 (%)</th><th class="c">PEO Ach (%)</th><th class="c">Target (%)</th><th class="c">Status</th></tr></thead>
+      <tbody id="mtx-tbl"></tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3>Root Cause Analysis Indicators</h3>
+    <p class="cs">Analisis automatik punca akar berdasarkan corak skor soalan untuk PEO dan program yang dipilih.</p>
+    <div id="rca-div"></div>
+  </div>
+</div>
+
+<!-- ══════════════════ PAGE 4: CQI INTELLIGENCE ══════════════════ -->
+<div class="pg" id="p4">
+  <div class="pg-ttl">
+    <h2>⚙ CQI Intelligence Dashboard</h2>
+    <p>AI-generated findings, root cause analysis, risk areas, improvement priorities and CQI action plan — MQA accreditation ready.</p>
+  </div>
+
+  <div class="kg" id="kpi-p4" style="grid-template-columns:repeat(4,1fr);"></div>
+
+  <div class="g2">
+    <div class="card">
+      <h3>🔴 Key Findings — PEOs Below Target</h3>
+      <p class="cs">PEO yang gagal mencapai sasaran KPI dan memerlukan tindakan CQI segera.</p>
+      <div id="cqi-findings"></div>
+    </div>
+    <div class="card">
+      <h3>🏆 Best Performing Programme</h3>
+      <p class="cs">Program dengan pencapaian PEO terbaik sebagai amalan terbaik untuk dikongsi.</p>
+      <div id="cqi-best"></div>
+    </div>
+  </div>
+
+  <div class="g2">
+    <div class="card">
+      <h3>⚠ Weakest Survey Indicators (Question-Level)</h3>
+      <p class="cs">Soalan dengan skor paling rendah — menunjukkan bidang intervensi yang spesifik diperlukan.</p>
+      <div id="cqi-weak"></div>
+    </div>
+    <div class="card">
+      <h3>🚨 High Risk Areas</h3>
+      <p class="cs">Kawasan berisiko tinggi berdasarkan analisis data yang memerlukan perhatian segera.</p>
+      <div id="cqi-risk"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>✅ CQI Action Plan — Immediate · Short-Term · Long-Term</h3>
+    <p class="cs">Pelan tindakan berprioriti berdasarkan analisis data sebenar daripada laporan Graduate Survey 2026.</p>
+    <div id="cqi-actions"></div>
+  </div>
+
+  <div class="abox">
+    <h3>📋 Accreditation-Ready Compliance Summary (MQA / ETAC)</h3>
+    <div class="ag" id="accred"></div>
+  </div>
+
+  <div class="card">
+    <h3>CQI Priority Bar Chart — Achievement vs Target (All Programmes × PEOs)</h3>
+    <p class="cs">Disusun dari pencapaian terendah. Bar merah = di bawah sasaran; hijau = mencapai sasaran.</p>
+    <div class="cw" style="max-height:420px;"><canvas id="ch-cqi"></canvas></div>
+  </div>
+</div>
+
+</div><!-- /main -->
+
+<div class="footer">
+  <strong>Politeknik Seberang Perai</strong> &nbsp;|&nbsp; Jabatan Kejuruteraan Elektrik &nbsp;|&nbsp;
+  PEO Achievement Analytics Dashboard &nbsp;|&nbsp; 2021 Graduate Cohort &nbsp;|&nbsp;
+  Data Source: Graduate Survey 2026 &nbsp;|&nbsp;
+  <em>For internal OBE monitoring, CQI evaluation and MQA accreditation use only.</em>
+</div>
+
+<script>
+// ════════════════════════════════════════════════════
+// REAL DATA — Extracted from PDF Reports (2026)
+// ════════════════════════════════════════════════════
+const TARGETS = { PEO1:60, PEO2:80, PEO3:60, PEO4:80 };
+
+const PROGS = {
+  DEE: 'Diploma Kejuruteraan Elektrik dan Elektronik',
+  DTK: 'Diploma Kejuruteraan Elektronik (Komputer)',
+  DEP: 'Diploma Kejuruteraan Elektronik (Komunikasi)'
+};
+const PKS = ['DEE','DTK','DEP'];
+const PEOKS = ['PEO1','PEO2','PEO3','PEO4'];
+
+const PEOS = {
+  PEO1: 'Practising as technician in electrical engineering related field',
+  PEO2: 'Contributing to society with professional ethics and responsibilities',
+  PEO3: 'Engaging in enterprising activities that apply engineering knowledge and technical skills',
+  PEO4: 'Engaging in activities to enhance knowledge for successful career advancement'
+};
+const PEOSH = { PEO1:'Practising Technician', PEO2:'Ethics & Responsibility', PEO3:'Enterprising Activities', PEO4:'Career Advancement' };
+
+const QS = {
+  PEO1: ['Working in engineering related field','Applying engineering knowledge in job scope','Performing technical engineering tasks effectively'],
+  PEO2: ['Practising ethical conduct & professional responsibility','Membership of professional bodies/societies','Community and social involvement'],
+  PEO3: ['Entrepreneurship activities (full/part-time)','Research and Development (R&D) involvement','Seminars, competitions & innovation activities'],
+  PEO4: ['Technology enhancement courses & activities','Holding professional certification','Career advancement achievements']
+};
+
+// Real data from PDF reports
+// Achievement % calculated from YES/Total respondents
+// DEE: 122 respondents
+// DEP: 50 respondents
+// DTK: 89 respondents
+const DATA = {
+  DEE: {
+    graduates: 170, respondents: 122, male: 95, female: 27,
+    peo: {
+      PEO1: { a: 96.7, q: [85.2, 93.4, 94.3] },  // 104/122, 114/122, 115/122
+      PEO2: { a: 98.4, q: [98.4, 42.6, 50.0] },  // 120/122, 52/122, 61/122
+      PEO3: { a: 51.4, q: [27.9, 29.5, 37.7] },  // 34/122, 36/122, 46/122
+      PEO4: { a: 68.0, q: [63.9, 36.9, 55.7] }   // 78/122, 45/122, avg career
+    }
+  },
+  DTK: {
+    graduates: 106, respondents: 89, male: 56, female: 33,
+    peo: {
+      PEO1: { a: 87.6, q: [60.7, 75.3, 95.5] },  // 54/89, 67/89, 85/89
+      PEO2: { a: 98.9, q: [97.8, 20.2, 49.4] },  // 87/89, 18/89, 44/89
+      PEO3: { a: 50.6, q: [25.8, 28.1, 31.5] },  // 23/89, 25/89, 28/89
+      PEO4: { a: 61.8, q: [58.4, 23.6, 51.7] }   // 52/89, 21/89, career avg
+    }
+  },
+  DEP: {
+    graduates: 67, respondents: 50, male: 26, female: 24,
+    peo: {
+      PEO1: { a: 96.0, q: [82.0, 90.0, 98.0] },  // 41/50, 45/50, 49/50
+      PEO2: { a: 100.0, q: [100.0, 10.0, 40.0] }, // 50/50, 5/50, 20/50
+      PEO3: { a: 44.0, q: [26.0, 30.0, 28.0] },  // 13/50, 15/50, 14/50
+      PEO4: { a: 68.0, q: [66.0, 24.0, 52.0] }   // 33/50, 12/50, career avg
+    }
+  }
+};
+
+const PCOLS = { DEE:'#1d6fa4', DTK:'#16a34a', DEP:'#d97706' };
+const PBGS  = { DEE:'rgba(29,111,164,.15)', DTK:'rgba(22,163,74,.15)', DEP:'rgba(217,119,6,.15)' };
+
+// ════════════════════════════════════════════════════
+// HELPERS
+// ════════════════════════════════════════════════════
+function respRate(p){ const d=DATA[p]; return parseFloat((d.respondents/d.graduates*100).toFixed(1)); }
+function avgPEO(p){ return parseFloat((PEOKS.map(k=>DATA[p].peo[k].a).reduce((a,b)=>a+b,0)/4).toFixed(1)); }
+
+// Colour logic: green = achieved, amber = within 10% below target, red = >10% below
+function scls(v,peo){ const t=TARGETS[peo]; if(v>=t)return 'cg'; if(v>=t-10)return 'ca'; return 'cr'; }
+function sdot(v,peo){ const t=TARGETS[peo]; if(v>=t)return 'dg'; if(v>=t-10)return 'da'; return 'dr'; }
+function stxt(v,peo){ const t=TARGETS[peo]; if(v>=t)return 'sg'; if(v>=t-10)return 'sa'; return 'sr'; }
+function slbl(v,peo){ const t=TARGETS[peo]; if(v>=t)return '✔ Achieved'; if(v>=t-10)return '⚠ Near Target'; return '✘ Not Achieved'; }
+function sbdg(v,peo){ const c=v>=TARGETS[peo]?'bg':v>=TARGETS[peo]-10?'ba':'br'; return `<span class="badge ${c}">${slbl(v,peo)}</span>`; }
+function pbcls(v,peo){ const t=TARGETS[peo]; return v>=t?'pbg':v>=t-10?'pba':'pbr'; }
+
+// Chart registry
+const CC={};
+function mk(id,cfg){ if(CC[id])CC[id].destroy(); CC[id]=new Chart(document.getElementById(id).getContext('2d'),cfg); }
+
+// Target line plugins (horizontal)
+const TLP={ id:'tlp', afterDraw(c){
+  const {ctx,chartArea,scales}=c;
+  if(!chartArea||!scales.y)return;
+  c.data.datasets.forEach((ds,i)=>{
+    if(!ds._target)return;
+    const y=scales.y.getPixelForValue(ds._target);
+    ctx.save();ctx.strokeStyle='rgba(220,38,38,.7)';ctx.lineWidth=1.8;ctx.setLineDash([6,4]);
+    ctx.beginPath();ctx.moveTo(chartArea.left,y);ctx.lineTo(chartArea.right,y);ctx.stroke();ctx.restore();
+  });
+}};
+// Vertical target line
+const TLPV={ id:'tlpv', afterDraw(c){
+  const {ctx,chartArea,scales}=c;
+  if(!chartArea||!scales.x)return;
+  c.data.datasets.forEach(ds=>{
+    if(!ds._target)return;
+    const x=scales.x.getPixelForValue(ds._target);
+    ctx.save();ctx.strokeStyle='rgba(220,38,38,.7)';ctx.lineWidth=1.8;ctx.setLineDash([6,4]);
+    ctx.beginPath();ctx.moveTo(x,chartArea.top);ctx.lineTo(x,chartArea.bottom);ctx.stroke();ctx.restore();
+  });
+}};
+
+// ════════════════════════════════════════════════════
+// PAGE 1 — EXECUTIVE OVERVIEW
+// ════════════════════════════════════════════════════
+function renderP1(){
+  let tG=0,tR=0,peoDone=0;
+  PKS.forEach(p=>{tG+=DATA[p].graduates;tR+=DATA[p].respondents;});
+  PKS.forEach(p=>PEOKS.forEach(k=>{ if(DATA[p].peo[k].a>=TARGETS[k]) peoDone++; }));
+  const avgRR=parseFloat((tR/tG*100).toFixed(1));
+  const deptAvg=parseFloat((PKS.flatMap(p=>PEOKS.map(k=>DATA[p].peo[k].a)).reduce((a,b)=>a+b,0)/12).toFixed(1));
+
+  const kpis=[
+    {l:'Total Graduates',v:tG,s:'DEE+DTK+DEP',c:''},
+    {l:'Total Respondents',v:tR,s:`${avgRR}% Avg Response Rate`,c:avgRR>=70?'g':'a',f:''},
+    {l:'Avg Response Rate',v:avgRR,s:'Minimum target: 70%',c:avgRR>=70?'g':'r',f:'%'},
+    {l:'Programmes',v:3,s:'DEE · DTK · DEP',c:'',f:''},
+    {l:'PEOs Achieved',v:peoDone,s:`Out of 12 combinations`,c:peoDone>=8?'g':peoDone>=5?'a':'r',f:''},
+    {l:'Overall Score',v:deptAvg,s:'Dept avg all PEO×Prog',c:deptAvg>=70?'g':deptAvg>=60?'a':'r',f:'%'}
+  ];
+  document.getElementById('kpi-p1').innerHTML=kpis.map(k=>`
+    <div class="kc ${k.c}">
+      <div class="kl">${k.l}</div>
+      <div class="kv">${k.v}<span>${k.f||''}</span></div>
+      <div class="ks">${k.s}</div>
+    </div>`).join('');
+
+  // Target vs Achievement clustered bar
+  const labels=PEOKS.map(k=>k+' (T:'+TARGETS[k]+'%)');
+  mk('ch-tva',{type:'bar',
+    data:{labels,datasets:[
+      ...PKS.map(p=>({label:p,data:PEOKS.map(k=>DATA[p].peo[k].a),backgroundColor:PCOLS[p],borderRadius:4})),
+      {label:'Target',data:PEOKS.map(()=>null),type:'line',borderColor:'transparent',backgroundColor:'transparent',pointRadius:0,_target:0}
+    ]},
+    options:{responsive:true,maintainAspectRatio:true,
+      scales:{y:{min:0,max:110,ticks:{callback:v=>v+'%'},grid:{color:'#f0f0f0'}},x:{grid:{display:false}}},
+      plugins:{legend:{position:'bottom'},tooltip:{callbacks:{label:c=>`${c.dataset.label}: ${c.raw}%`}}}},
+    plugins:[{id:'mltgt',afterDraw(c){
+      const {ctx,chartArea,scales}=c;if(!chartArea||!scales.y)return;
+      PEOKS.forEach((k,i)=>{
+        const t=TARGETS[k];
+        const y=scales.y.getPixelForValue(t);
+        const barW=chartArea.width/PEOKS.length;
+        const x0=chartArea.left+i*barW;
+        ctx.save();ctx.strokeStyle='rgba(220,38,38,.8)';ctx.lineWidth=2;ctx.setLineDash([5,4]);
+        ctx.beginPath();ctx.moveTo(x0+2,y);ctx.lineTo(x0+barW-2,y);ctx.stroke();
+        ctx.fillStyle='rgba(220,38,38,.85)';ctx.font='bold 10px sans-serif';
+        ctx.fillText('T:'+t+'%',x0+4,y-3);ctx.restore();
+      });
+    }}]
+  });
+
+  // Ranking
+  const ranks=PKS.map(p=>({code:p,avg:avgPEO(p),ach:PEOKS.filter(k=>DATA[p].peo[k].a>=TARGETS[k]).length})).sort((a,b)=>b.avg-a.avg);
+  const rnc=['rn1','rn2','rn3'];
+  document.getElementById('ranking').innerHTML=ranks.map((r,i)=>`
+    <div class="rrow">
+      <div class="rnum ${rnc[i]}">${i+1}</div>
+      <div class="ri">
+        <div class="rn">${r.code}</div>
+        <div class="rs">${PROGS[r.code].replace('Diploma Kejuruteraan ','')} · ${r.ach}/4 PEOs Achieved</div>
+      </div>
+      <div class="rv">${r.avg}%</div>
+      ${sbdg(r.avg,'PEO2')}
+    </div>`).join('');
+
+  // Heatmap P1
+  document.getElementById('hm-p1').innerHTML=PKS.map(p=>{
+    const scores=PEOKS.map(k=>DATA[p].peo[k].a);
+    const avg=parseFloat((scores.reduce((a,b)=>a+b,0)/4).toFixed(1));
+    return `<tr>
+      <td><strong>${p}</strong><br><small style="font-weight:400;color:var(--muted);">${PROGS[p].replace('Diploma Kejuruteraan ','')}</small></td>
+      ${PEOKS.map((k,i)=>`<td class="${scls(scores[i],k)}">${scores[i]}%</td>`).join('')}
+      <td style="font-size:1rem;font-weight:800;background:#f7f9fc;">${avg}%</td>
+    </tr>`;}).join('');
+
+  // Summary table
+  const sb=document.getElementById('sum-tbl'); sb.innerHTML='';
+  PKS.forEach(p=>PEOKS.forEach(k=>{
+    const a=DATA[p].peo[k].a,t=TARGETS[k],g=parseFloat((a-t).toFixed(1));
+    const gstr=g>=0?`<span class="sg">+${g}%</span>`:`<span class="sr">${g}%</span>`;
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td><strong>${p}</strong></td><td>${k}</td>
+      <td class="c">${t}%</td><td class="c" style="font-weight:700;">${a}%</td>
+      <td class="c">${gstr}</td>
+      <td class="c"><span class="dot ${sdot(a,k)}"></span><span class="${stxt(a,k)}">${slbl(a,k)}</span></td>
+      <td><div class="pb"><div class="pbf ${pbcls(a,k)}" style="width:${Math.min(a,100)}%;"></div></div></td>`;
+    sb.appendChild(tr);
+  }));
+}
+
+// ════════════════════════════════════════════════════
+// PAGE 2 — PROGRAMME COMPARISON
+// ════════════════════════════════════════════════════
+let p2f='all';
+function renderP2(){
+  const sel=p2f==='all'?PEOKS:[p2f];
+
+  // Clustered bar
+  mk('ch-cl',{type:'bar',
+    data:{labels:sel.map(k=>k+' (T:'+TARGETS[k]+'%)'),
+      datasets:PKS.map(p=>({label:p,data:sel.map(k=>DATA[p].peo[k].a),backgroundColor:PCOLS[p],borderRadius:4}))},
+    options:{responsive:true,maintainAspectRatio:true,
+      scales:{y:{min:0,max:110,ticks:{callback:v=>v+'%'},grid:{color:'#f0f0f0'}},x:{grid:{display:false}}},
+      plugins:{legend:{position:'bottom'},tooltip:{callbacks:{label:c=>`${c.dataset.label}: ${c.raw}%`}}}},
+    plugins:[{id:'seltgt',afterDraw(c){
+      const {ctx,chartArea,scales}=c;if(!chartArea||!scales.y)return;
+      sel.forEach((k,i)=>{
+        const t=TARGETS[k],y=scales.y.getPixelForValue(t);
+        const bw=chartArea.width/sel.length,x0=chartArea.left+i*bw;
+        ctx.save();ctx.strokeStyle='rgba(220,38,38,.8)';ctx.lineWidth=2;ctx.setLineDash([5,4]);
+        ctx.beginPath();ctx.moveTo(x0+2,y);ctx.lineTo(x0+bw-2,y);ctx.stroke();
+        ctx.fillStyle='rgba(220,38,38,.9)';ctx.font='bold 10px sans-serif';ctx.fillText('T:'+t+'%',x0+4,y-3);ctx.restore();
+      });
+    }}]
+  });
+
+  // Response Rate
+  mk('ch-rr',{type:'bar',
+    data:{labels:PKS,datasets:[{label:'Response Rate %',data:PKS.map(p=>respRate(p)),backgroundColor:PKS.map(p=>PCOLS[p]),borderRadius:6}]},
+    options:{responsive:true,maintainAspectRatio:true,indexAxis:'y',
+      scales:{x:{min:0,max:100,ticks:{callback:v=>v+'%'}}},
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`Response Rate: ${c.raw}%`}}}},
+    plugins:[{id:'rrtgt',afterDraw(c){
+      const {ctx,chartArea,scales}=c;if(!chartArea||!scales.x)return;
+      const x=scales.x.getPixelForValue(70);
+      ctx.save();ctx.strokeStyle='rgba(22,163,74,.8)';ctx.lineWidth=2;ctx.setLineDash([6,4]);
+      ctx.beginPath();ctx.moveTo(x,chartArea.top);ctx.lineTo(x,chartArea.bottom);ctx.stroke();
+      ctx.fillStyle='rgba(22,163,74,.9)';ctx.font='bold 10px sans-serif';ctx.fillText('Min 70%',x+3,chartArea.top+12);ctx.restore();
+    }}]
+  });
+
+  // Gender stacked
+  mk('ch-gen',{type:'bar',
+    data:{labels:PKS,datasets:[
+      {label:'Male',data:PKS.map(p=>parseFloat((DATA[p].male/DATA[p].respondents*100).toFixed(1))),backgroundColor:'#3b82f6'},
+      {label:'Female',data:PKS.map(p=>parseFloat((DATA[p].female/DATA[p].respondents*100).toFixed(1))),backgroundColor:'#ec4899'}
+    ]},
+    options:{responsive:true,maintainAspectRatio:true,
+      scales:{x:{stacked:true},y:{stacked:true,max:100,ticks:{callback:v=>v+'%'}}},
+      plugins:{legend:{position:'bottom'},tooltip:{callbacks:{label:c=>`${c.dataset.label}: ${c.raw}%`}}}}});
+
+  // Heatmap P2
+  document.getElementById('hm-p2').innerHTML=PKS.map(p=>{
+    const scores=sel.map(k=>DATA[p].peo[k].a);
+    const avg=parseFloat((scores.reduce((a,b)=>a+b,0)/scores.length).toFixed(1));
+    const rr=respRate(p);
+    return `<tr>
+      <td><strong>${p}</strong><br><small style="font-weight:400;color:var(--muted);">${PROGS[p].replace('Diploma Kejuruteraan ','')}</small></td>
+      ${sel.map((k,i)=>`<td class="${scls(scores[i],k)}">${scores[i]}%</td>`).join('')}
+      <td style="background:#f7f9fc;font-size:1rem;font-weight:800;">${avg}%</td>
+      <td class="${rr>=70?'cg':rr>=60?'ca':'cr'}">${rr}%</td>
+    </tr>`;}).join('');
+}
+
+// ════════════════════════════════════════════════════
+// PAGE 3 — PEO DEEP DIVE
+// ════════════════════════════════════════════════════
+function renderP3(){
+  const peo=document.getElementById('p3-peo').value;
+  const prog=document.getElementById('p3-prog').value;
+  const pl=prog==='all'?PKS:[prog];
+
+  // 4 PEO score gauges
+  document.getElementById('peo-g4').innerHTML=PEOKS.map(k=>{
+    const avgs=PKS.map(p=>DATA[p].peo[k].a);
+    const avg=parseFloat((avgs.reduce((a,b)=>a+b,0)/3).toFixed(1));
+    const sc=avg>=TARGETS[k]?'var(--green)':avg>=TARGETS[k]-10?'var(--amber)':'var(--red)';
+    const isSel=k===peo?'outline:2px solid var(--blue2);':'' ;
+    return `<div class="pgc" style="${isSel}">
+      <div class="pgl">${k}</div>
+      <div class="pgs2" style="color:${sc};">${avg}%</div>
+      <div class="pgt">Target: ${TARGETS[k]}% &nbsp; ${sbdg(avg,k)}</div>
+      <div style="font-size:.7rem;color:var(--muted);margin-top:4px;">${PEOSH[k]}</div>
+    </div>`;}).join('');
+
+  // Question level bar
+  const qlD=[];
+  pl.forEach(p=>QS[peo].forEach((q,i)=>{
+    qlD.push({lbl:`${p} Q${i+1}: ${q.substring(0,32)}…`,val:DATA[p].peo[peo].q[i],p});
+  }));
+  qlD.sort((a,b)=>a.val-b.val);
+  const peoAvgQ=parseFloat((pl.map(p=>DATA[p].peo[peo].a).reduce((a,b)=>a+b,0)/pl.length).toFixed(1));
+  mk('ch-ql',{type:'bar',
+    data:{labels:qlD.map(r=>r.lbl),datasets:[{label:'Score %',data:qlD.map(r=>r.val),
+      backgroundColor:qlD.map(r=>r.val<peoAvgQ?'rgba(220,38,38,.72)':'rgba(29,111,164,.72)'),borderRadius:4}]},
+    options:{responsive:true,maintainAspectRatio:true,indexAxis:'y',
+      scales:{x:{min:0,max:110,ticks:{callback:v=>v+'%'}},y:{ticks:{font:{size:10}}}},
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`${c.raw}%${c.raw<peoAvgQ?' ⚠ below PEO avg':''}`}}}}});
+
+  // Programme comparison
+  mk('ch-pc',{type:'bar',
+    data:{labels:['Q1','Q2','Q3'],
+      datasets:[...pl.map(p=>({label:p,data:DATA[p].peo[peo].q,backgroundColor:PCOLS[p],borderRadius:4})),
+        {label:'PEO Target',data:[TARGETS[peo],TARGETS[peo],TARGETS[peo]],type:'line',borderColor:'rgba(220,38,38,.7)',borderDash:[6,4],borderWidth:2,pointRadius:0,fill:false,backgroundColor:'transparent'}
+      ]},
+    options:{responsive:true,maintainAspectRatio:true,
+      scales:{y:{min:0,max:110,ticks:{callback:v=>v+'%'},grid:{color:'#f0f0f0'}},x:{grid:{display:false}}},
+      plugins:{legend:{position:'bottom'},tooltip:{callbacks:{label:c=>`${c.dataset.label}: ${c.raw}%`}}}}});
+
+  // Matrix table
+  const mb=document.getElementById('mtx-tbl'); mb.innerHTML='';
+  pl.forEach(p=>PEOKS.forEach(k=>{
+    const qs=DATA[p].peo[k].q,a=DATA[p].peo[k].a,t=TARGETS[k];
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td><strong>${p}</strong></td><td>${k}</td>
+      ${qs.map(q=>`<td class="c" style="${q<a?'color:var(--red);font-weight:700;':''}">${q.toFixed(1)}%</td>`).join('')}
+      <td class="c" style="font-weight:800;">${a}%</td><td class="c">${t}%</td>
+      <td class="c"><span class="dot ${sdot(a,k)}"></span><span class="${stxt(a,k)}">${slbl(a,k)}</span></td>`;
+    mb.appendChild(tr);
+  }));
+
+  // RCA
+  const rcDiv=document.getElementById('rca-div'); rcDiv.innerHTML='';
+  pl.forEach(p=>{
+    const qs=DATA[p].peo[peo].q,a=DATA[p].peo[peo].a,t=TARGETS[peo];
+    const minQ=Math.min(...qs),minI=qs.indexOf(minQ);
+    if(a<t){
+      rcDiv.innerHTML+=`<div class="crisk"><div class="ft">ROOT CAUSE — ${p} ${peo} (${a}% vs Target ${t}%)</div>
+      <strong>Weakest indicator: Q${minI+1} "${QS[peo][minI]}" at ${minQ.toFixed(1)}%</strong>
+      <p>Achievement of ${a}% falls ${(t-a).toFixed(1)}% below the ${t}% target. The lowest question score is Q${minI+1} (${minQ.toFixed(1)}%), indicating graduates have limited engagement in "${QS[peo][minI].toLowerCase()}". Root cause likely involves insufficient curriculum exposure or limited post-graduation professional activity in this domain. CQI action required.</p></div>`;
+    } else if(a<t+10){
+      rcDiv.innerHTML+=`<div class="cwarn"><div class="ft">WATCH — ${p} ${peo} (${a}% — Achieved but marginal)</div>
+      <strong>Monitor: Q${minI+1} "${QS[peo][minI]}" is lowest at ${minQ.toFixed(1)}%</strong>
+      <p>Target achieved (${a}% vs ${t}%) but requires sustained attention. Q${minI+1} at ${minQ.toFixed(1)}% is the weakest point within this PEO. Recommend proactive curriculum reinforcement to build a performance buffer.</p></div>`;
+    } else {
+      rcDiv.innerHTML+=`<div class="crec"><div class="ft">COMPLIANT — ${p} ${peo} (${a}%)</div>
+      <strong>All questions performing satisfactorily</strong>
+      <p>Target exceeded by ${(a-t).toFixed(1)}%. Current practices are effective. Continue monitoring and maintain current delivery strategies.</p></div>`;
+    }
+  });
+  if(rcDiv.innerHTML==='') rcDiv.innerHTML='<div class="crec"><p>No data available for selected combination.</p></div>';
+}
+
+// ════════════════════════════════════════════════════
+// PAGE 4 — CQI INTELLIGENCE
+// ════════════════════════════════════════════════════
+function renderP4(){
+  let below=0,near=0,above=0;
+  PKS.forEach(p=>PEOKS.forEach(k=>{
+    const a=DATA[p].peo[k].a,t=TARGETS[k];
+    if(a>=t)above++;else if(a>=t-10)near++;else below++;
+  }));
+  const dAvg=parseFloat((PKS.flatMap(p=>PEOKS.map(k=>DATA[p].peo[k].a)).reduce((a,b)=>a+b,0)/12).toFixed(1));
+  const avgRR=parseFloat((PKS.map(p=>respRate(p)).reduce((a,b)=>a+b,0)/3).toFixed(1));
+
+  // KPI P4
+  document.getElementById('kpi-p4').innerHTML=[
+    {l:'PEOs Achieved',v:above,s:`Out of 12 combinations`,c:above>=8?'g':above>=5?'a':'r',f:''},
+    {l:'Near Target',v:near,s:'Within 10% below target',c:near<=2?'g':'a',f:''},
+    {l:'Not Achieved',v:below,s:'Requires CQI action',c:below===0?'g':below<=2?'a':'r',f:''},
+    {l:'Dept Avg Score',v:dAvg,s:'Overall OBE performance',c:dAvg>=70?'g':dAvg>=60?'a':'r',f:'%'}
+  ].map(k=>`<div class="kc ${k.c}"><div class="kl">${k.l}</div><div class="kv">${k.v}<span>${k.f}</span></div><div class="ks">${k.s}</div></div>`).join('');
+
+  // Key Findings
+  const findings=[];
+  PKS.forEach(p=>PEOKS.forEach(k=>{if(DATA[p].peo[k].a<TARGETS[k]) findings.push({p,k,a:DATA[p].peo[k].a,gap:TARGETS[k]-DATA[p].peo[k].a});}));
+  findings.sort((a,b)=>b.gap-a.gap);
+  document.getElementById('cqi-findings').innerHTML=findings.length===0
+    ?`<div class="crec"><strong>✅ Excellent — All PEOs Achieved</strong><p>All 12 PEO-Programme combinations meet their KPI targets. Maintain practices and monitor next cohort.</p></div>`
+    :findings.map(f=>`<div class="crisk"><div class="ft">NOT ACHIEVED · Gap: ${f.gap.toFixed(1)}%</div>
+      <strong>${f.p} — ${f.k} (${PEOSH[f.k]}): ${f.a}%  vs  Target ${TARGETS[f.k]}%</strong>
+      <p>This combination requires an immediate structured CQI action plan with measurable outcomes, assigned PIC and clear timeline. Document in the Department CQI Register before next Programme Board meeting.</p></div>`).join('');
+
+  // Best performers
+  const progR=PKS.map(p=>({code:p,avg:avgPEO(p),ach:PEOKS.filter(k=>DATA[p].peo[k].a>=TARGETS[k]).length})).sort((a,b)=>b.avg-a.avg);
+  document.getElementById('cqi-best').innerHTML=progR.map((r,i)=>`
+    <div class="crec">
+      <strong>${['🥇','🥈','🥉'][i]} ${r.code} — ${PROGS[r.code].replace('Diploma Kejuruteraan ','')}</strong>
+      <p>Average PEO Score: <strong>${r.avg}%</strong> &nbsp;|&nbsp; PEOs Achieved: <strong>${r.ach}/4</strong><br>
+      ${i===0?'Top performer — share strategies with other coordinators through internal benchmarking session.':i===1?'Good performance — focus on sustaining PEO3 & PEO4 improvement.':'Requires most attention — coordinate with Department Board for structured improvement plan.'}</p>
+    </div>`).join('');
+
+  // Weakest indicators
+  const weak=[];
+  PKS.forEach(p=>PEOKS.forEach(k=>DATA[p].peo[k].q.forEach((q,i)=>{
+    if(q<DATA[p].peo[k].a) weak.push({p,k,qi:i+1,q:QS[k][i],score:q,peoA:DATA[p].peo[k].a,gap:DATA[p].peo[k].a-q});
+  })));
+  weak.sort((a,b)=>a.score-b.score);
+  document.getElementById('cqi-weak').innerHTML=weak.slice(0,8).map(w=>`
+    <div class="cwarn"><div class="ft">${w.p} · ${w.k} · Q${w.qi}</div>
+    <strong>"${w.q}"</strong>
+    <p>Score: <strong>${w.score.toFixed(1)}%</strong> (PEO Average: ${w.peoA}%). Gap below PEO average: ${w.gap.toFixed(1)}%.</p></div>`).join('');
+
+  // Risk areas
+  let risks='';
+  PKS.forEach(p=>{
+    const rr=respRate(p);
+    if(rr<70) risks+=`<div class="crisk"><div class="ft">LOW RESPONSE RATE — ${p}</div><strong>Response Rate: ${rr}% (Minimum: 70%)</strong><p>Response rate below institutional minimum. Recommend enhanced alumni outreach via social media, WhatsApp and LinkedIn channels. Target: ≥70% for next cycle.</p></div>`;
+  });
+  PKS.forEach(p=>PEOKS.forEach(k=>{
+    if(DATA[p].peo[k].a<TARGETS[k]-10) risks+=`<div class="crisk"><div class="ft">CRITICAL GAP — ${p} ${k}</div><strong>Achievement ${DATA[p].peo[k].a}% vs Target ${TARGETS[k]}% (Gap: ${(TARGETS[k]-DATA[p].peo[k].a).toFixed(1)}%)</strong><p>Gap exceeds 10%. This indicates a systemic programme-level issue. Requires Programme Board escalation, curriculum review and structured industry engagement programme.</p></div>`;
+  }));
+  if(!risks) risks=`<div class="crec"><strong>✅ No critical risk areas identified.</strong><p>All programmes within manageable performance range. Continue CQI monitoring cycle.</p></div>`;
+  document.getElementById('cqi-risk').innerHTML=risks;
+
+  // CQI Actions
+  document.getElementById('cqi-actions').innerHTML=`
+    <div class="crisk"><div class="ft">🔴 IMMEDIATE ACTION (Within 1 month)</div>
+    <strong>Open CQI Action Plans for all PEOs below target — PEO3 (all programmes) and PEO4 (all programmes)</strong>
+    <p>Based on the graduate survey data, PEO3 is not achieved across all three programmes: DEE (51.4% vs 60%), DTK (50.6% vs 60%), DEP (44.0% vs 60%). PEO4 is also below target: DEE (68.0% vs 80%), DTK (61.8% vs 80%), DEP (68.0% vs 80%). Immediate action: HoD to direct all Programme Coordinators to open formal CQI Action Plans in the Department Register, specifying root cause, proposed action, PIC, and target completion date.</p></div>
+    <div class="crec"><div class="ft">🟡 SHORT-TERM ACTION (Within 1 semester)</div>
+    <strong>Integrate entrepreneurship and R&D components into existing technical subjects for PEO3 improvement</strong>
+    <p>The lowest question scores for PEO3 are in Q1 (entrepreneurship activities): DEE 27.9%, DTK 25.8%, DEP 26.0% — all critically low. Actions: (1) Map PEO3 to Programme Learning Outcomes (PLOs) and ensure at least 2 existing subjects include entrepreneurship-linked assessments. (2) Require student participation in at least one innovation competition or R&D project per semester. (3) Establish industry mentoring programme with engineering companies for graduate engagement. (4) Review FYP guidelines to mandate product/process improvement component with industry impact.</p></div>
+    <div class="crec"><div class="ft">🟡 SHORT-TERM ACTION (Within 1 semester)</div>
+    <strong>Enhance professional development awareness and certification pathways for PEO4 improvement</strong>
+    <p>PEO4 Q2 "Professional certification" scores are critically low: DEE 36.9%, DTK 23.6%, DEP 24.0%. Actions: (1) Introduce mandatory Professional Development seminars in final semester — invite IEM, BEM, IEEE, MBOT representatives. (2) Develop a Graduate Professional Development Roadmap document distributed to all final-semester students. (3) Establish JKE Alumni Network via WhatsApp/LinkedIn for peer mentoring on certification pathways. (4) Coordinate with student services for career advancement workshops.</p></div>
+    <div class="crec"><div class="ft">🟢 LONG-TERM ACTION (Next programme cycle)</div>
+    <strong>Conduct DTK-DEP internal benchmarking and redesign PEO3 & PEO4 measurement instruments</strong>
+    <p>Long-term strategic actions: (1) Organise internal best-practice sharing session — coordinate between all three programme heads to share effective delivery strategies for PEO3 and PEO4. (2) Review Graduate Survey instrument at next IAP/Alumni meeting to ensure questions adequately capture current graduate industry activities. (3) Target response rate ≥85% for next cycle through digital outreach strategy. (4) Benchmark PEO3 and PEO4 achievement against comparable polytechnic programmes nationally. (5) Document all interventions and their measured impact in the Department CQI Register as evidence for MQA SRR submission.</p></div>`;
+
+  // Accreditation
+  document.getElementById('accred').innerHTML=PKS.map(p=>{
+    const ach=PEOKS.filter(k=>DATA[p].peo[k].a>=TARGETS[k]).length;
+    const rr=respRate(p);
+    const compliant=ach===4&&rr>=70;
+    return `<div class="ac" style="border-top:3px solid ${compliant?'var(--green)':'var(--amber)'};">
+      <div class="acc">${p}</div>
+      <div class="acn">${PROGS[p].replace('Diploma Kejuruteraan ','')}</div>
+      <div class="acr"><span>Graduates</span><strong>${DATA[p].graduates}</strong></div>
+      <div class="acr"><span>Respondents</span><strong>${DATA[p].respondents}</strong></div>
+      <div class="acr"><span>Response Rate</span><strong class="${rr>=70?'sg':'sr'}">${rr}%</strong></div>
+      <div class="acr"><span>PEOs Achieved</span><strong>${ach}/4</strong></div>
+      <div class="acr"><span>Cohort</span><strong>2021</strong></div>
+      <div style="margin-top:8px;">${compliant
+        ?'<span class="badge bg">✔ COMPLIANT</span>'
+        :'<span class="badge ba">⚠ CQI ACTION REQUIRED</span>'}</div>
+    </div>`;}).join('');
+
+  // CQI bar
+  const bd=[];
+  PKS.forEach(p=>PEOKS.forEach(k=>{
+    bd.push({lbl:`${p} — ${k}`,val:DATA[p].peo[k].a,tgt:TARGETS[k],col:DATA[p].peo[k].a>=TARGETS[k]?PCOLS[p]:'rgba(220,38,38,.72)'});
+  }));
+  bd.sort((a,b)=>a.val-b.val);
+  mk('ch-cqi',{type:'bar',
+    data:{labels:bd.map(r=>r.lbl),datasets:[{label:'Achievement %',data:bd.map(r=>r.val),backgroundColor:bd.map(r=>r.col),borderRadius:4,_target:0}]},
+    options:{responsive:true,maintainAspectRatio:true,indexAxis:'y',
+      scales:{x:{min:0,max:110,ticks:{callback:v=>v+'%'}}},
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>{const r=bd[c.dataIndex];return `${r.lbl}: ${r.val}% (Target: ${r.tgt}%)`;}}}}},
+    plugins:[{id:'mqtgt',afterDraw(c){
+      const {ctx,chartArea,scales}=c;if(!chartArea||!scales.x)return;
+      const tgts=[60,80];
+      tgts.forEach(t=>{
+        const x=scales.x.getPixelForValue(t);
+        ctx.save();ctx.strokeStyle='rgba(220,38,38,.65)';ctx.lineWidth=1.8;ctx.setLineDash([5,4]);
+        ctx.beginPath();ctx.moveTo(x,chartArea.top);ctx.lineTo(x,chartArea.bottom);ctx.stroke();
+        ctx.fillStyle='rgba(220,38,38,.85)';ctx.font='bold 10px sans-serif';
+        ctx.fillText('T:'+t+'%',x+3,chartArea.top+12);ctx.restore();
+      });
+    }}]
+  });
+}
+
+// ════════════════════════════════════════════════════
+// NAVIGATION
+// ════════════════════════════════════════════════════
+document.querySelectorAll('.nb').forEach(b=>{
+  b.addEventListener('click',()=>{
+    document.querySelectorAll('.nb').forEach(x=>x.classList.remove('on'));
+    document.querySelectorAll('.pg').forEach(x=>x.classList.remove('on'));
+    b.classList.add('on');
+    document.getElementById(b.dataset.pg).classList.add('on');
+    if(b.dataset.pg==='p1')renderP1();
+    else if(b.dataset.pg==='p2')renderP2();
+    else if(b.dataset.pg==='p3')renderP3();
+    else if(b.dataset.pg==='p4')renderP4();
+  });
+});
+
+document.querySelectorAll('#peo-tf .tbtn').forEach(b=>{
+  b.addEventListener('click',()=>{
+    document.querySelectorAll('#peo-tf .tbtn').forEach(x=>x.classList.remove('on'));
+    b.classList.add('on');p2f=b.dataset.peo;renderP2();
+  });
+});
+
+document.getElementById('p3-peo').addEventListener('change',renderP3);
+document.getElementById('p3-prog').addEventListener('change',renderP3);
+
+// INIT
+renderP1();
+</script>
+</body>
+</html>
